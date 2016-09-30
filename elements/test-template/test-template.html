@@ -1,0 +1,109 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animatable.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-from-right-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-left-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-right-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/fade-out-animation.html">
+
+<dom-module id="test-template">
+  <style is="custom-style">
+    @input url("../../styles\test-style.css")
+  </style>
+  <template>    
+    <template is="dom-repeat" id="surveyquestions" items="{{items}}" sort="_sort">
+
+      <template is="dom-if" if="{{isFormat(item.Type, 'Single-Select')}}" >
+        <question-singleselect question="{{item}}" auth-Data="{{authData}}"></question-singleselect>
+      </template>
+
+      <template is="dom-if" if="{{isFormat(item.Type,'Open-Ended')}}">
+        <question-openended question="{{item}}" auth-Data="{{authData}}"></question-openended>
+      </template>
+
+      <template is="dom-if" if="{{isFormat(item.Type,'Text Block')}}">
+        <question-textblock question="{{item}}" auth-Data="{{authData}}"></question-textblock>
+      </template>
+
+      <template is="dom-if" if="[[isFormat(item.Type,'Open-Ended Select')]]">
+        <question-openendedselect question="{{item}}" auth-Data="{{authData}}"></question-openendedselect>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Multi-Select')]]">
+        <question-multiselect question="{{item}}" auth-Data="{{authData}}"></question-multiselect>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Header')]]">
+        <question-header question="{{item}}" auth-Data="{{authData}}"></question-header>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Group Header')]]">
+        <question-groupheader question="{{item}}" auth-Data="{{authData}}"></question-groupheader>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Open-Ended Multi-Select')]]">
+        <question-openendedmultiselect question="{{item}}" auth-Data="{{authData}}"></question-openendedmultiselect>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Section')]]">
+        <question-section question="{{item}}" auth-Data="{{authData}}"></question-section>
+      </template>
+ 
+      <template is="dom-if" if="[[isFormat(item.Type,'Yes/No')]]">
+        <question-yesno question="{{item}}" auth-Data="{{authData}}"></question-yesno>
+      </template>
+ 
+      <template is="dom-if" if="{{isFormat(item.Type,'Numerical')}}">
+        <question-numerical question="{{item}}" auth-Data="{{authData}}"></question-numerical>
+      </template>
+ 
+      <template is="dom-if" if="{{isFormat(item.Type,'Start')}}">
+        <question-start question="{{item}}" auth-Data="{{authData}}"></question-start>
+      </template>
+ 
+      <template is="dom-if" if="{{isFormat(item.Type,'End')}}">
+        <question-end question="{{item}}" auth-Data="{{authData}}"></question-end>
+      </template>
+    </template>
+  </template>
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+
+        is: 'test-template',
+
+        properties: {
+          items: {
+            type: Object,
+            notify:true
+          }
+        },
+        behaviors: [
+            Polymer.NeonAnimationRunnerBehavior,
+            Polymer.NeonAnimatableBehavior
+        ],
+        _sort: function(a, b) {
+          if (a.Sequence === b.Sequence) return 0;
+            return a.Sequence < b.Sequence ? -1 : 1;
+        },
+
+        isFormat: function(code, format) {
+          var flag = false;
+          if(code===format)
+            {
+              flag=true;
+            }
+            else
+              {
+                flag=false;
+              }
+          return flag;
+        }
+
+      });
+    })();
+  </script>
+</dom-module>
