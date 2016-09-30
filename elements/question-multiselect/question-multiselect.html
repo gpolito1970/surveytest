@@ -1,0 +1,206 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../question-behavior.html">
+
+<dom-module id="question-multiselect">
+  <template>
+    <question-chrome question="{{question}}">
+      <div class="questionanswers">
+        <paper-listbox class="dropdown-content" label="{{question.Description}}"  id="multiselectanswer_{{question.Id}}" multi required="{{question.IsRequired}}" error-message="Survey Question Required" on-iron-select="_itemSelected" on-iron-deselect="_itemSelected" selectedValues="{{selected}}">
+          <template is="dom-repeat" items="{{question.Answers}}">
+            <paper-item value="{{item}}">{{item.Title}}</paper-item>
+          </template>
+        </paper-listbox>
+        <iron-label hidden="{{hiddenflag}}" id="{{errormessage}}">
+          <div style="color:red;">{{errormessagevalue}}</div>
+        </iron-label>
+      </div>
+    </question-chrome>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'question-multiselect',
+
+       behaviors: [QuestionBehavior],
+
+       properties: {
+
+        AnswerId: {
+          type: Array,
+          notify: true,
+          value: function() { return  [];}
+        },
+
+        answers: {
+          type: Array,
+          notify: true
+        },
+
+        OpenEndedResponse: {
+          type: String,
+          notify: true
+        }
+      },
+
+      prevAction: function(event) {
+        if (this.question.IsRequired)
+        {
+          if (this.answers === undefined)
+          {
+            //this.$.errormessage.hidden = false;
+            this.errormessagevalue = 'At least one item must be selected.';
+            this.hiddenflag = false;
+          }
+          if (this.answers.length > 0)
+          {
+           // this.$.errormessage.hidden = true;
+           this.errormessagevalue = '';
+            this.hiddenflag = true;
+          }
+          else
+
+          {
+            // answer = this.$.errormessage.hidden = false;
+            this.errormessagevalue = 'At least one item must be selected.';
+            this.hiddenflag = false;
+          }
+        }
+        else
+        {
+          //this.$.errormessage.hidden = true;
+          this.errormessagevalue = '';
+          this.hiddenflag = true;
+        }
+        return this.answers;
+      },
+
+      nextAction: function(event) {
+        if (this.question.IsRequired)
+        {
+          if (this.answers === undefined)
+          {
+             this.errormessagevalue = 'At least one item must be selected.';
+             this.hiddenflag = false;
+          }
+          if (this.answers.length > 0)
+          {
+            //this.$.errormessage.hidden = true;
+            this.errormessagevalue = '';
+             this.hiddenflag = true;
+          }
+          else
+          {
+            //this.$.errormessage.hidden = false;
+            this.errormessagevalue = 'At least one item must be selected.';
+            this.hiddenflag = false;
+          }
+        }
+        else
+        {
+          //this.$.errormessage.hidden = true;
+          this.errormessagevalue = '';
+          this.hiddenflag = true;
+        }
+        return this.answers;
+      },
+
+      saveAction: function(event) {
+
+      if (this.question.IsRequired)
+        {
+          if (this.answers === undefined)
+          {
+            this.errormessagevalue = 'At least one item must be selected.';
+            this.hiddenflag = false;
+            return;
+          }
+          if (this.answers.length > 0)
+          {
+            this.errormessagevalue = '';
+            this.hiddenflag = true;
+          }
+          else
+          {
+            this.errormessagevalue = 'At least one item must be selected.';
+            this.hiddenflag = false;
+            return;
+          }
+        }
+        else
+        {
+          this.errormessagevalue = 'At least one item must be selected.';
+          this.hiddenflag = true;
+        }
+        return this.answers;
+      },
+
+      _itemSelected : function(e) {
+        var selectedItems = e.target.selectedItems;
+        var _answers = [];
+        for (var i = 0; i < selectedItems.length; i++)
+        {
+          _answers[i] = e.target.selectedItems[i].value.Id
+        }
+        this.answers = _answers;
+        this.set('answers', _answers)
+      },
+
+      setSubmissionDetail: function(submissiondetail) {
+        //document.querySelector('#CustomListboxID').setSelected('value2')
+        var dropdown = this.element.$$('paper-listbox');
+        _.each(this.element.$$('paper-listbox').items, function(item,index){
+          if(item.value.Id === submissiondetail.AnswerId){
+            dropdown.select(index);
+          }
+        });
+
+        if(typeof this.question.submissiondetails == "undefined"){
+          this.question.submissiondetails = [];
+        }
+
+        this.question.submissiondetails.push(submissiondetail);
+      },
+
+      getSubmissionDetails: function(submissionheaderid) {
+        //var items = this.xxxxanswers;
+        var items = this.element.answers;
+        var answers = [];
+        if (typeof items != "undefined")
+        {
+          for (var i = 0; i < items.length; i++)
+          {
+            var eDate = new Date();
+            answers.push({
+              'SubmissionId': submissionheaderid,
+              'QuestionId': this.question.Id,
+              'AnswerId': items[i],
+              'OpenEndedResponse': '',
+              'EntryDate': eDate.toISOString(),
+              'NumericalResponse': '',
+              'IsInactive': false,
+            });
+
+          };
+          return answers;
+        }
+        else
+        {
+          return null;
+        }
+      }
+    })
+  })();
+  </script>
+</dom-module>

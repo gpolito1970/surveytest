@@ -1,0 +1,468 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="..\..\bower_components/polymer/polymer.html">
+<link rel="import" href="..\..\bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="..\..\bower_components/paper-button/paper-button.html">
+<link rel="import" href="..\..\bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="..\..\bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="..\..\bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="..\..\bower_components/neon-animation/neon-animatable.html">
+<link rel="import" href="..\..\bower_components/neon-animation/animations/slide-from-right-animation.html">
+<link rel="import" href="..\..\bower_components/neon-animation/animations/slide-left-animation.html">
+<link rel="import" href="..\..\bower_components/neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="..\..\bower_components/neon-animation/animations/slide-right-animation.html">
+<link rel="import" href="..\..\bower_components/neon-animation/animations/fade-out-animation.html">
+<link rel="import" href="..\..\bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="..\..\bower_components/iron-label/iron-label.html">
+
+<link rel="import" href="..\..\auth/test-survey-srv-env.html">
+<link rel="import" href="..\..\auth/test-survey-srv-env-dev.html">
+
+<link rel="import" href="../question-groupfooter/question-groupfooter.html">
+<link rel="import" href="../question-groupheader/question-groupheader.html">
+<link rel="import" href="../question-header/question-header.html">
+<link rel="import" href="../question-multiselect/question-multiselect.html">
+<link rel="import" href="../question-numerical/question-numerical.html">
+<link rel="import" href="../question-openended/question-openended.html">
+<link rel="import" href="../question-singleselect/question-singleselect.html">
+<link rel="import" href="../question-textblock/question-textblock.html">
+<link rel="import" href="../question-openendedselect/question-openendedselect.html">
+<link rel="import" href="../question-openendedmultiselect/question-openendedmultiselect.html">
+<link rel="import" href="../question-yesno/question-yesno.html">
+<link rel="import" href="../question-section/question-section.html">
+<link rel="import" href="../test-template/test-template.html">
+
+
+<dom-module id="test-survey2">
+  <template>
+    <iron-ajax id="oauth" handle-as="json" content-type="application/x-www-form-urlencoded" debounce-duration="300" method="POST">
+    </iron-ajax>
+    <iron-ajax id="SubmissionDetailSaver" url="/SubmissionDetail/" content-type="application/json" handle-as="json" method="PUT" last-response="{{submissiondetail}}" debounce-duration="300">
+    </iron-ajax>
+    <iron-ajax id="SubmissionHeaderSaver" url="/SubmissionHeader/" content-type="application/json" handle-as="json" method="PUT" last-response="{{submissionheader}}" debounce-duration="300">
+    </iron-ajax>
+    <iron-ajax auto id="surveyLoader" url="/survey/{{surveyid}}" handle-as="json" last-response="{{survey}}" debounce-duration="300">
+    </iron-ajax>
+     <iron-ajax auto id="submissionLoader" url="/submissionheader/{{submissionid}}" handle-as="json" last-response="{{submissionheader}}" debounce-duration="300">
+    </iron-ajax>
+
+    <style is="custom-style">
+      @input url("..\..\styles\test-style.css")
+    </style>
+    <div class="vertical layout">    
+      <div class="flex">
+        <neon-animated-pages id="views" class="flex" selected="0" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
+          <template is="dom-repeat" id="surveyquestions" items="{{survey.Questions}}" sort="_sort">
+            <template is="dom-if" restamp if="{{isFormat(item.Type, 'Single-Select')}}" >
+              <question-singleselect question="{{item}}" auth-Data="{{authData}}"></question-singleselect>
+            </template>
+            <template is="dom-if" restamp if="{{isFormat(item.Type,'Open-Ended')}}">
+              <question-openended question="{{item}}" auth-Data="{{authData}}"></question-openended>
+            </template>
+            <template is="dom-if" restamp if="{{isFormat(item.Type,'Text Block')}}">
+              <question-textblock question="{{item}}" auth-Data="{{authData}}"></question-textblock>
+            </template>
+           <template is="dom-if" if="[[isFormat(item.Type,'Open-Ended Select')]]">
+              <question-openendedselect question="{{item}}" auth-Data="{{authData}}"></question-openendedselect>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Multi-Select')]]">
+              <question-multiselect question="{{item}}" auth-Data="{{authData}}"></question-multiselect>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Header')]]">
+              <question-header question="{{item}}" auth-Data="{{authData}}"></question-header>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Group Header')]]">
+              <question-groupheader question="{{item}}" auth-Data="{{authData}}"></question-groupheader>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Open-Ended Multi-Select')]]">
+              <question-openendedmultiselect question="{{item}}" auth-Data="{{authData}}"></question-openendedmultiselect>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Section')]]">
+              <question-section question="{{item}}" auth-Data="{{authData}}"></question-section>
+            </template>
+            <template is="dom-if" if="[[isFormat(item.Type,'Yes/No')]]">
+              <question-yesno question="{{item}}" auth-Data="{{authData}}"></question-yesno>
+            </template>
+            <template is="dom-if" if="{{isFormat(item.Type,'Numerical')}}">
+              <question-numerical question="{{item}}" auth-Data="{{authData}}"></question-numerical>
+            </template>
+          </template>
+        </neon-animated-pages>
+        <paper-toast 
+          id="toast" 
+          text="Saved successfully.">
+        </paper-toast>
+      </div>
+      <div> 
+        
+      </div>
+    </div>
+  </template>
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'test-survey2',
+
+        behaviors: [
+        Polymer.NeonSharedElementAnimatableBehavior,
+        Polymer.NeonAnimationRunnerBehavior
+        ],
+
+        properties: {
+          submissionheader: {
+            type: Object
+          },
+          submissiondetail: {
+            type: Object
+          },
+          survey: {
+            type: Object
+          },
+          surveyid: {
+            type: String
+          },
+          submissionid: {
+            type: String
+          },
+          authData: {
+            type: Object,
+            notify: true
+          },
+          sliderValue: {
+            type: String
+          },
+          sliderCount: {
+            type: String
+          }
+        },
+
+        listeners: {
+          'iron-select': '_onIronSelect'
+        },
+
+        _onIronSelect: function(event) {
+          // mainly used to know what page we are on, from the open event until every button click, to enable/disable the buttons accordingly and on the right paper-card.
+
+          var selectedPage = event.detail.item;
+          var prev = true;
+          var next = false;
+          var save = true;
+          var onPage = this.$.views.selected;
+          var onPageID = this.$.views.items[this.$.views.selected].question.Id;
+          if (onPage === parseInt(this.$.views.items.length) - 1)
+          {
+            next = true;
+            prev = false;
+            save = false;
+          }
+          else
+          {
+            if (onPage === "0")
+            {
+              prev = true;
+              save = true;
+              next = false;
+            }
+            else
+            {
+              prev = false;
+              next = false;
+              save = true;
+            }
+          }
+          if (selectedPage.$$('question-chrome') != null)
+          {
+            selectedPage.$$('question-chrome').formatButton(prev, next, save);
+          }
+        },
+
+        _sort: function(a, b) {  
+          if (a.Sequence === b.Sequence) return 0;
+            return a.Sequence < b.Sequence ? -1 : 1;
+        },
+
+        isFormat: function(code, format) {
+          var flag = false;
+          if(code===format)
+            {
+              flag=true;
+            }
+            else
+              {
+                flag=false;
+              }
+          return flag;
+        },
+
+        backAction: function(event) {
+          window.history.back();
+        },
+
+        createAction: function(event) {
+
+        },
+
+        prevAction: function(event) {
+          this.$.views.entryAnimation = 'slide-from-left-animation';
+          this.$.views.exitAnimation = 'slide-right-animation';
+          var selected = [];
+          var nextQuestionId;
+          selected[0] = 0;
+          selected[1] = nextQuestionId;
+          
+          if (this.$.views.selected == '0')
+          {
+            selected[0] = parseInt(this.$.views.items.length) - 1;
+            selected[1] = this.$.views.items[selected[0]].question.Id
+          }
+          else
+           {
+            selected[0] = parseInt(this.$.views.selected) - 1;
+            selected[1] = this.$.views.items[selected[0]].question.Id
+          } 
+          this.$.views.selected = selected[0];
+          document.getElementById("mainContainer").scrollTop = 0 
+          return selected;
+        },
+
+        nextAction: function(event) {
+          this.$.views.entryAnimation = 'slide-from-right-animation';
+          this.$.views.exitAnimation = 'slide-left-animation';
+          var selected = [];
+          var nextQuestionId;
+          selected[0] = 0;
+          selected[1] = nextQuestionId;
+
+          if (this.$.views.selected != parseInt(this.$.views.items.length) - 1)
+          {
+            selected[0] = parseInt(this.$.views.selected) + 1;
+            selected[1] = this.$.views.items[selected[0]].question.Id
+          }         
+          this.$.views.selected = selected[0];
+          document.getElementById("mainContainer").scrollTop = 0 
+          return selected;
+        },
+
+        getValue: function(object) {
+          var ret = null;
+          if (Array.isArray(object)) {
+            ret = object[0];
+          }
+          if (typeof object === 'object') {
+            ret = object;
+          }
+          return ret;
+        },
+
+        saveAction: function(event) {
+          if( this.submissionheader ===  null || this.submissionheader === undefined ) 
+          {
+            this.set( 'submissionheader', this.newDoc(this.surveyid, this.customerid ));
+          }
+          else
+          {
+            this.set( 'submissionheader', this.submissionheader);
+            this.submissionheader.SubmissionDetails = this.checkDetail(this.submissionheader.Id);
+          }
+           this.createSubmissionHeader(this.submissionheader);//include the rows of details
+        },
+
+        newDoc: function(SurveyId, CustomerId){
+          var eDate = new Date();
+          //Build submission detail here so we can add it as the last
+          var submissiondetails;
+          var submissionid;
+          if( this.submissionheader ===  null || this.submissionheader === undefined ) 
+          {
+            submissionid='00000000-0000-0000-0000-000000000000';
+          }
+          else
+          {
+            submissionid=this.submissionheader.Id;
+          }
+          var test = this.checkDetail(submissionid);
+          //submissiondetails = JSON.stringify(test);
+          return {
+            'Id':'00000000-0000-0000-0000-000000000000',
+            'SurveyId': SurveyId, //the one document
+            'CustomerId': 'FDE700E3-DF83-406A-8BA4-1A97BAB8CC90',//CustomerId, //alpha chapter
+            'EntryDate': eDate.toISOString(),
+            'IsInactive': false,
+            "SubmissionDetails" : test
+          };
+        },
+
+         createSubmissionHeader: function(sdocument) 
+        {
+          this.$.SubmissionHeaderSaver.method = "PUT";
+          this.$.SubmissionHeaderSaver.body = JSON.stringify(sdocument);
+          setToken(this.$.SubmissionHeaderSaver, this.authData).then(function() 
+          {
+            var d = this.$.SubmissionHeaderSaver.generateRequest();
+            var success = function(value)
+            {
+              //ok so I have to make sure all of this is getting saved here.
+              var r = value.response;
+              this.set(this.submissionid, r.Id);
+              this.set('submissionheader', r);
+              this.notifyPath('submissionheader.Id', r.Id);
+            }.bind(this);
+
+            var fail = function(reason)
+            {
+              handleFailure(this.$.SubmissionHeaderSaver, this.authData, this, success, fail,reason);
+            }.bind(this);
+
+            //ok so I have to make sure all of this is getting saved here.
+            d.completes.then(success,fail);
+
+          }.bind(this));
+          this.$.toast.show();
+          return null;
+        },
+
+        checkDetail: function(submissionid)
+        {
+          var answers = [];
+          var questions = this.$.surveyquestions;
+          var hasRequiredFields = false;
+
+          for (var i = 0; i < questions.items.length; i++)
+          {
+            var question = questions.items[i];
+
+            if (typeof question.getSubmissionDetails === "function")
+            {
+              var test = question.getSubmissionDetails(submissionid);
+              Array.prototype.push.apply(answers, test);
+            }
+          }
+          return answers;
+        },
+
+        refreshAction: function(event) {
+
+          setToken(this.$.surveyLoader, this.authData).then(function() {
+            this.$.surveyLoader.generateRequest();
+          });
+
+          setToken(this.$.submissionLoader, this.authData).then(function() {
+            this.$.submissionLoader.generateRequest();
+          });
+        },
+
+      //functions
+        sortSections: function(a, b) {
+          return a.SortOrder - b.SortOrder;
+        },
+
+        // Element Lifecycle
+        ready: function() {
+          // `ready` is called after all elements have been configured, but
+          // propagates bottom-up. This element's children are ready, but parents
+          // are not.
+          //
+          // This is the point where you should make modifications to the DOM (when
+          // necessary), or kick off any processes the element wants to perform.
+        },
+
+        attached: function() {
+          // `attached` fires once the element and its parents have been inserted
+          // into a document.
+          //
+          // This is a good place to perform any work related to your element's
+          // visual state or active behavior (measuring sizes, beginning animations,
+          // loading resources, etc).
+
+          setuptestingIronAjax(
+            this.$$('#oauth')
+          );
+
+          setuptestingoauth(
+            this.$$('#oauth'),
+            this.authData
+          );
+
+          setuptestingIronAjax(
+            this.$$('#surveyLoader')
+          );
+
+           setuptestingIronAjax(
+            this.$$('#submissionLoader')
+          );
+          
+          setuptestingIronAjax(
+            this.$$('#SubmissionHeaderSaver'),
+            '/SubmissionHeader'
+          );
+
+          setuptestingIronAjax(
+            this.$$('#SubmissionDetailSaver'),
+            '/SubmissionDetail'
+          );
+          var surveydocument;
+          //first step we just loaded so lets get some awesome going
+         getToken (this.authData).then(function(value) {
+            var dlt = setToken(this.$$('#surveyLoader'), this.authData);
+
+            Promise.all([dlt]).then(function(values) {
+              //ok lets load things up here, so we can deal with them easier.
+              var dl = this.$$('#surveyLoader').generateRequest();
+
+              Promise.all([dl.completes]).then(function(values) {
+              //ok this is were we can merge them.
+              surveydocument = dl.response;
+              this.set('surveydocument', surveydocument); 
+              document.title = surveydocument.Name;
+              document.getElementById('lblTitle').innerHTML = surveydocument.Name;
+            }.bind(this)); //all loads.
+
+            var slt = setToken(this.$$('#submissionLoader'), this.authData);
+            //Promise.all([slt]).then(function(values) {
+            //ok lets load things up here, so we can deal with them easier.
+            var sl = this.$$('#submissionLoader').generateRequest();
+            Promise.all([sl.completes,dl.completes]).then(function(values) {
+              var submissiondocument = sl.response;
+              submissiondocument.SubmissionDetails.forEach(function(element){
+                var question = _.find(surveydocument.Questions, function(value){
+                  return value.Id === element.QuestionId;
+                });
+
+                if(typeof question != "undefined" ){
+                  if(typeof question.setSubmissionDetail != "function" ){
+                    console.log("OMG");
+                  } else{
+                    question.setSubmissionDetail(element);
+                  }
+                } else {
+                  console.log("ZOMG");                  
+                }
+              });
+                  
+              this.set('submissionheader', submissiondocument);
+            }.bind(this)); //all loads.
+          }.bind(this)); //all tokens
+        }.bind(this)); //got token
+      },
+    
+        detached: function() {
+          // The analog to `attached`, `detached` fires when the element has been
+          // removed from a document.
+          //
+          // Use this to clean up anything you did in `attached`.
+        }
+      });
+    })();
+  </script>
+</dom-module>

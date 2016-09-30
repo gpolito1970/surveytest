@@ -1,0 +1,468 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../promise-polyfill/promise-polyfill.html">
+<link rel="import" href="../app/auth/test-survey-srv-env.html">
+<link rel="import" href="test-section.html">
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,200italic,300italic,400italic,600italic,700italic,900italic" rel="stylesheet" type="text/css" />
+
+
+<!--
+An element providing the title and structure for a complete testing document as loaded in the testing document class.
+
+Example:
+
+    <test-document></test-document>
+
+@demo
+-->
+<dom-module id="test-document">
+
+  <style>
+    :host {
+      display: block;
+      box-sizing: border-box;
+
+      --paper-font-common-base: {
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+
+      --paper-toolbar-title: {
+        margin:0;
+      }
+
+      --paper-toolbar-background: #715B9C;
+      --paper-toolbar-color: #fff;
+    }
+
+  </style>
+
+  <template>
+
+    <iron-ajax
+      id="oauth"
+      handle-as="json"
+      content-type="application/x-www-form-urlencoded"
+      debounce-duration="300"
+      method="POST">
+    </iron-ajax>
+
+    <iron-ajax
+      id="documentLoader"
+      url='/document/ById/{{id}}'
+      handle-as="json"
+      debounce-duration="300">
+    </iron-ajax>
+
+    <iron-ajax
+      id="customerdocumentLoader"
+      url='/CustomerDocument/CustomerIdAndDocumentIdAndActive/{{customerid}}/{{id}}'
+      handle-as="json"
+      debounce-duration="300">
+    </iron-ajax>
+
+
+    <iron-ajax
+      id="documentSaver"
+      method="PUT"
+      body=""
+      url='/CustomerDocument'
+      handle-as="json"
+      content-type="application/json"
+      last-response="{{customerdocument}}"
+      debounce-duration="300">
+    </iron-ajax>
+
+
+    <iron-ajax
+      id="documentApprover"
+      method="PUT"
+      body=""
+      url='/CustomerDocument/approve/{{customerdocument.Id}}'
+      handle-as="json"
+      content-type="application/json"
+      last-response="{{customerdocument}}"
+      debounce-duration="300">
+    </iron-ajax>
+
+    <paper-header-panel class="flex">
+
+      <paper-toolbar middleJustify="start" justify="start" class="tall">
+        <paper-icon-button icon="icons:arrow-back" on-tap="backAction"></paper-icon-button>
+        <!--
+        <paper-icon-button icon="icons:refresh" on-tap="refreshAction"></paper-icon-button>
+        <paper-icon-button icon="icons:save" on-tap="saveAction"></paper-icon-button>
+        -->
+
+        <div class="top title">Test, Incorporated</div>
+        <div class="middle title"><content select=".documentdescription"></content>{{document.Name}}</div>
+        <div class="bottom"><content select=".documenttitle"></content> {{document.Purpose}}</div>
+      </paper-toolbar>
+
+
+      <content select=".definitions"></content>
+
+
+      <div style="display:flex;flex-direction:column;">
+        <template is="dom-repeat" items="{{document.Sections}}" sort="sortSections">
+          <test-section
+            style="flex-grow:1;"
+            section="{{item}}"
+            customerdocumentid="{{customerdocument.Id}}"
+            customerid="{{customerid}}"
+            personid="{{personid}}"
+            substitution="{{substitution}}"
+            auth-Data="{{authData}}"
+          ></test-section>
+        </template>
+      </div>
+    </paper-header-panel>
+
+   <!--  <paper-button raised on-tap="saveAction">Save</paper-button> -->
+    <paper-button raised on-tap="submitAction">Submit</paper-button>
+    <paper-toast id="toast" text="Hello world!"></paper-toast>
+  </template>
+
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: 'test-document',
+
+    properties: {
+
+      /**
+       * `document` indicates that the element should don a monocle and tophat,
+       * while checking its pocket watch.
+       */
+      document: {
+        type: Object
+      },
+      /**
+       * `id` indicatest the document that should be loaded as this is the GUID.
+       */
+      id: {
+        type: String
+      },
+      /**
+       * `customerid` indicatest the customer/chapter that the document is being amended for. This is the GUID.
+       */
+      customerid: {
+        type: String
+      },
+      personid: {
+        type: String
+      },
+      /**
+       * `substitution` is the chapter that the document is being amended for. This is the GUID.
+       */
+      substitution: {
+        type: Object
+      },
+      customerdocument: {
+        type: Object,
+        notify: true
+      },
+      authData: {
+        type: Object,
+        notify: true
+      }
+    },
+
+    backAction : function(event) {
+      window.history.back();
+    },
+
+    createAction: function(event) {
+
+      this.newDocument();
+      this.createCustomerDocument(this.customerdocument );
+
+    },
+
+    createCustomerDocument: function(ndocument) {
+
+      this.$.documentSaver.method = "PUT";
+      this.$.documentSaver.body = JSON.stringify(ndocument);
+      setToken(this.$.documentSaver, this.authData).then(function() {
+        var d = this.$.documentSaver.generateRequest();
+
+        var success = function(value){
+          //ok so I have to make sure all of this is getting saved here.
+          var r = value.response;
+          this.set('customerdocument', r);
+          this.notifyPath('customerdocument.Id', r.Id);
+        }.bind(this);
+
+        var fail = function(reason){
+
+          handleFailure(this.$.documentSaver, this.authData, this, success, fail,reason);
+
+        }.bind(this);
+
+        //ok so I have to make sure all of this is getting saved here.
+        d.completes.then(success,fail);
+
+      }.bind(this));
+
+    },
+
+    newDocument: function(){
+      if( this.customerdocument ===  null || this.customerdocument === undefined ) {
+        this.set( 'customerdocument' , newDoc(this.document.Id, this.customerid ));
+      }
+    },
+
+    newDoc: function(DocumentId, CustomerId){
+      return {
+        'Id':'00000000-0000-0000-0000-000000000000',
+        'DocumentId': DocumentId, //the one document
+        'CustomerId': CustomerId, //alpha chapter
+        'IsInactive': false,
+      };
+    },
+
+    getValue: function(object) {
+      var ret = null;
+      if(Array.isArray(object)) {
+        ret = object[0];
+      }
+      if(typeof object ===  'object') {
+        ret = object;
+      }
+      return ret;
+    },
+
+    saveAction: function(event) {
+
+      this.newDocument();
+
+      this.$.documentSaver.method = "PUT";
+      this.$.documentSaver.body = JSON.stringify(this.customerdocument);
+
+      setToken(this.$$('#documentLoader'), this.authData).then(function(){
+
+        var d = this.$.documentSaver.generateRequest();
+
+        var success = function(value){
+          //ok so I have to make sure all of this is getting saved here.
+          var r = value.response[0];
+          //need to check this
+          this.set('customerdocument', r);
+
+        }.bind(this);
+
+        var fail = function(reason){
+
+          handleFailure(this.$.documentSaver, this.authData, this, success, fail,reason);
+
+        }.bind(this);
+
+        //ok so I have to make sure all of this is getting saved here.
+        d.completes.then(success,fail);
+
+      }.bind(this));
+
+    },
+
+    submitAction: function(event) {
+
+      var tdate = new Date();
+
+      this.set('customerdocument.DateSubmitted', tdate.toISOString());
+
+
+      this.$.documentSaver.method = "PUT";
+      this.$.documentSaver.body = JSON.stringify(this.customerdocument);
+      setToken(this.$.documentSaver, this.authData).then(function() {
+        var d = this.$.documentSaver.generateRequest();
+
+        var success = function(value){
+          //ok so I have to make sure all of this is getting saved here.
+          var r = this.getValue(value.response);
+          //need to check this
+          this.set('customerdocument', r);
+
+          if(r.CustomerSections === null || (r.CustomerSections && r.CustomerSections.length === 0) ) {
+
+            setuptestingIronAjax(
+              this.$$('#documentApprover')
+            );
+
+            this.$.documentApprover.method = "PUT";
+            //this.$.documentApprover.body = JSON.stringify(this.customerdocument);
+            setToken(this.$.documentApprover, this.authData).then(function() {
+
+              var d = this.$.documentApprover.generateRequest();
+
+              var success = function(value) {
+
+                this.backAction();
+
+              }.bind(this);
+
+              var fail = function(reason) {
+
+                handleFailure(this.$.documentApprover, this.authData, this, success, fail,reason);
+
+              }.bind(this);
+
+              d.completes.then(success,fail);
+
+            }.bind(this));
+
+          } else {
+            this.backAction();
+          }
+
+        }.bind(this);
+
+        var fail = function(reason){
+
+          handleFailure(this.$.documentSaver, this.authData, this, success, fail,reason);
+
+        }.bind(this);
+
+        //ok so I have to make sure all of this is getting saved here.
+        d.completes.then(success,fail);
+      }.bind(this));
+
+    },
+
+    refreshAction: function(event){
+
+      setToken(this.$.documentLoader, this.authData).then(function() {
+        this.$.documentLoader.generateRequest();
+      });
+
+    },
+
+    //functions
+    sortSections: function (a, b) {
+      return a.SortOrder - b.SortOrder;
+    },
+
+    // Element Lifecycle
+    ready: function() {
+      // `ready` is called after all elements have been configured, but
+      // propagates bottom-up. This element's children are ready, but parents
+      // are not.
+      //
+      // This is the point where you should make modifications to the DOM (when
+      // necessary), or kick off any processes the element wants to perform.
+    },
+
+    attached: function() {
+      // `attached` fires once the element and its parents have been inserted
+      // into a document.
+      //
+      // This is a good place to perform any work related to your element's
+      // visual state or active behavior (measuring sizes, beginning animations,
+      // loading resources, etc).
+
+      setuptestingIronAjax(
+        this.$$('#oauth')
+      );
+
+      setuptestingoauth(
+        this.$$('#oauth'),
+        this.authData
+      );
+
+      setuptestingIronAjax(
+        this.$$('#documentLoader')
+      );
+
+      setuptestingIronAjax(
+        this.$$('#customerdocumentLoader')
+      );
+
+      setuptestingIronAjax(
+        this.$$('#documentSaver'),
+        '/CustomerDocument'
+      );
+
+      setuptestingIronAjax(
+        this.$$('#documentApprover'),
+        '/CustomerDocument/approve/{{customerdocument.Id}}'
+      );
+
+
+      //first step we just loaded so lets get some awesome going
+      getToken( this.authData ).then( function( value ) {
+        var dlt = setToken( this.$$('#documentLoader'), this.authData );
+        var cdlt = setToken( this.$$('#customerdocumentLoader'), this.authData );
+
+        Promise.all([dlt, cdlt]).then(function(values) {
+          //ok lets load things up here, so we can deal with them easier.
+          var dl = this.$$('#documentLoader').generateRequest();
+          var cdl = this.$$('#customerdocumentLoader').generateRequest();
+
+          Promise.all([dl.completes,cdl.completes]).then(function(values) {
+
+            var document = dl.response;
+
+            var customerdocument = {};
+            if(cdl.response === null){
+              customerdocument = this.newDoc(this.id, this.customerid);
+              this.createCustomerDocument(customerdocument);
+            } else {
+              customerdocument = cdl.response[0];
+              //if we don't have any customer answers well we don't have to do anything.
+              if( customerdocument.CustomerSections && customerdocument.CustomerSections.length > 0) {
+
+                document.Sections = _.map(document.Sections, function(section) {
+                  var hshs = _.find(customerdocument.CustomerSections, function(customersection) {
+                    return section.Id === customersection.SectionId;
+                  });
+                  if(hshs) {
+                    section.CustomerSection = hshs;
+                  }
+
+                  return section;
+                }.bind(this));
+              }
+
+              this.set('customerdocument', customerdocument);
+            }
+
+            //ok this is were we can merge them.
+
+            this.set('document', document);
+
+          }.bind(this)); //all loads.
+
+
+        }.bind(this)); //all tokens
+
+
+      }.bind(this)); //got token
+
+
+
+    },
+
+    detached: function() {
+      // The analog to `attached`, `detached` fires when the element has been
+      // removed from a document.
+      //
+      // Use this to clean up anything you did in `attached`.
+    },
+
+    // Element Behavior
+
+  });
+
+</script>

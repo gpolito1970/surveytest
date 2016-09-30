@@ -1,0 +1,132 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../question-behavior.html">
+
+<dom-module id="question-singleselect">
+    <template>
+      <question-chrome question="{{question}}">
+        <div class="questionanswers">
+<!--http://stackoverflow.com/questions/35044884/set-selected-value-in-a-paper-menu-in-polymer-1-0-->
+          <paper-dropdown-menu label="{{question.Description}}"  selected="{{selectedValue}}" style="margin: 10px" id="answersingleselect_{{question.Id}}" required="{{question.IsRequired}}" error-message="Survey Question Required" on-iron-select="_itemSelected">
+            <paper-listbox class="dropdown-content" label="{{question.Description}}">
+              <template is="dom-repeat" items="{{question.Answers}}">
+                <paper-item value="{{item}}" id="answer" label="{{item}}" >{{item.Title}}</paper-item>
+              </template>
+            </paper-listbox>
+          </paper-dropdown-menu>
+        </div>
+
+      </question-chrome>
+    </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+
+      is: 'question-singleselect',
+
+      behaviors: [QuestionBehavior],
+
+       properties: {
+        answerId: {
+          type: String,
+          notify: true
+        },
+
+        answer: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      _itemSelected : function(e) {
+        var selectedItem = e.target.selectedItem;
+        if (selectedItem)
+        {
+          this.answerId = selectedItem.value.Id;
+          this.set('answerId', selectedItem.value.Id)
+        }
+      },
+
+      setSubmissionDetail: function(submissiondetail) {
+
+        //find the right answer in this list
+        //this.element.answer = submissiondetail.AnswerId;
+        //this.element.item = submissiondetail.AnswerId;
+        var i = 0;
+
+        for (i = 0; i < this.element.question.Answers.length; i++)
+        {
+            if (this.element.question.Answers[i].Id === submissiondetail.AnswerId )
+            {
+              this.element.dropdown = this.element.question.Answers[i].Title;   
+              //this.dropdown = this.element.question.Answers[i].Title;   
+
+              this.element.answer = this.element.question.Answers[i].Title;   
+             // this.answer = this.element.question.Answers[i].Title;   
+
+              this.element.answerId = submissiondetail.AnswerId;
+             // this.answerId = submissiondetail.AnswerId;
+              
+              this.element.selectedValue = this.element.question.Answers[i].Title;   
+              //this.selectedValue = this.element.question.Answers[i].Title;   
+
+              this.element.answer = this.element.question.Answers[i].Title;  
+              //this.answer = this.element.question.Answers[i].Title;   
+            }
+        }
+        //for each (var item in this.element.question.Answers) {
+        //  if (item.value.Id === submissiondetail.AnswerId)
+        //  {
+        //    this.element.selectedValue = submissiondetail.Title;
+        //  }
+        //}
+
+        //var dropdown = this.element.$$('paper-listbox');
+
+        //_.each(this.element.$$('paper-listbox').items, function(item,index){
+        //  if(item.value.Id === submissiondetail.AnswerId){
+        //    dropdown.select(index);
+        //  }
+        //});
+
+        if(typeof this.submissiondetails == "undefined"){
+          this.submissiondetails = [];
+        }
+
+        this.submissiondetails.push(submissiondetail);
+      },
+
+      getSubmissionDetails: function(submissionheaderid) {
+        var eDate = new Date();
+        var answers = [];
+        
+        answers.push({
+          'SubmissionId': submissionheaderid,
+          'QuestionId': this.question.Id,
+          'AnswerId': this.element.answerId,
+          'OpenEndedResponse':"",
+          'EntryDate': eDate.toISOString(),
+          'NumericalResponse': '',
+          'IsInactive': false,
+        });
+        return answers;
+      }
+    })
+  })();
+  </script>
+</dom-module>

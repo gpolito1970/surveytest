@@ -1,0 +1,32 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../question-behavior.html">
+
+<dom-module id="question-start">
+  <template>
+    <question-chrome question="{{question}}">
+      <div class="questionanswers">
+        <paper-material elevation="1">
+          <div>{{question.Description}}</div>
+        </paper-material>
+      </div>
+    </question-chrome>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+
+      is: 'question-start',
+
+      behaviors: [QuestionBehavior],
+
+      getSubmissionDetails: function(submissionheaderid) {
+        return 'xxx';
+      }
+
+    });
+  })();
+  </script>
+</dom-module>

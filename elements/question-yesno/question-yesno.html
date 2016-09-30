@@ -1,0 +1,58 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
+
+<dom-module id="question-yesno">
+  <template>
+    <question-chrome question="{{question}}">
+      <div class="questionanswers">
+        <paper-toggle-button noink id="answertoggle_{{question.Id}}" name="answeryesno" checked="{{OpenEndedResponse}}"  required="{{question.IsRequired}}" error-message="Survey Question Required"></paper-toggle-button>
+      </div>
+    </question-chrome>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'question-yesno',
+
+      behaviors: [QuestionBehavior],
+
+      setSubmissionDetail: function(submissiondetail) {
+        this.element.OpenEndedResponse = submissiondetail.OpenEndedResponse;
+
+        if(typeof this.submissiondetails == "undefined"){
+          this.submissiondetails = [];
+        }
+
+        this.submissiondetails.push(submissiondetail);
+      },
+
+      getSubmissionDetails: function(submissionheaderid) {
+        var eDate = new Date();
+        var ret = [{
+                'SubmissionId': submissionheaderid,
+                'QuestionId': this.question.Id,
+                'AnswerId': '',
+                'OpenEndedResponse':this.element.OpenEndedResponse,
+                'EntryDate': eDate.toISOString(),
+                'NumericalResponse': '',
+                'IsInactive': false,
+              }];
+
+        return ret;
+      }
+    });
+  })();
+  </script>
+</dom-module>

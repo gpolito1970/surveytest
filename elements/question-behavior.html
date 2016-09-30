@@ -1,0 +1,78 @@
+<script>
+  QuestionBehavior = {
+
+    properties: {
+      question: {
+          type: Object,
+          notify: true
+      },
+      authData: {
+        type: Object,
+        notify: true
+      },
+      submissiondetails: {
+        type: Array,
+        notify: true,
+        value: function() { return  [];}
+      }
+    },
+
+    //all editable quesitons use this.  The none editable questions don't have a getSubmissionDetails or a setSubmissionDetail
+    attached: function() {
+      if(typeof this.getSubmissionDetails === "function") {
+        this.question.getSubmissionDetails = this.getSubmissionDetails.bind({'question':this.question,'element':this});
+      }
+
+      if(typeof this.setSubmissionDetail === "function") {
+        this.question.setSubmissionDetail = this.setSubmissionDetail.bind({'question':this.question,'element':this});
+      }
+    },
+
+    goAction: function(event, callEvent) {
+
+      var output = this.getSubmissionDetails();
+
+      if(output === null) {
+        answer ='xx';
+      }
+      else
+      {
+        if(output.length > 0 ) {
+          answer =  this.fire(callEvent, this);;
+        }
+
+        if(output.length === 0) {
+          if(this.question.IsRequired) {
+            answer = 'xx';
+          } else {
+            answer =  this.fire(callEvent, this);
+          }
+        }
+      }
+      return answer;
+    },
+
+    prevAction: function(event) {
+      var ret = {};
+      ret = this.goAction(event, 'prev-Action');
+      return ret;
+    },
+
+    nextAction: function(event) {
+      //var ret = {};
+      submissiondetails = this.goAction(event, 'next-Action');
+
+      return submissiondetails;
+    },
+
+    //question-multiselect and question openendedmultiselet doesn't use this one, but a different one.
+    saveAction: function(event) {
+      var ret = {};
+      ret = this.goAction(event, 'save-Action');
+      return ret;
+
+      //this.domHost.saveAction();
+    }
+
+  };
+</script>

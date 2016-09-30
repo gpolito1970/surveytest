@@ -1,0 +1,90 @@
+<script>
+
+function setuptestingIronAjax(ironajax, url) {
+	ironajax.headers = testing_DOCUMENT_SERVER_ENV.headers;
+	if(url !== undefined) {
+		ironajax.url = testing_DOCUMENT_SERVER_ENV.url + url;
+	} else {
+		ironajax.url = testing_DOCUMENT_SERVER_ENV.url + ironajax.url;
+	}
+}
+
+function setuptestingoauth(ironajax, authData) {
+	ironajax.url = testing_DOCUMENT_SERVER_ENV.tokenurl;
+	authData.ironajax = ironajax;
+}
+
+function getToken(authData) {
+
+	if(authData.token && authData.token.refresh_token) {
+		authData.ironajax.body = {
+			'grant_type':'refresh_token',
+            'refresh_token': authData.token.refresh_token
+		};
+	} else {
+		authData.ironajax.body = {
+			'grant_type': 'password',
+			'username': authData.username,
+			'password': authData.password
+		};
+	}
+
+	var request = authData.ironajax.generateRequest();
+
+	return request.completes.then(
+
+		function(value){
+			//ok so everything should be good.
+			//we need to store this new token.
+			authData.token = value.response;
+
+			// removing one minute to make sure that we next have a request fail right as we call it.
+			var tokenLengthMinutes = (value.response.expires_in / 60) -1; 
+
+			authData.expiresAt = new Date(new Date().getTime() + tokenLengthMinutes*60000);
+			 
+		},
+		function(error){
+			//this is an error... OMG
+
+		}
+	);
+
+}
+
+function setToken(ironajax,authData) {
+
+	return new Promise(
+		  function(resolve, reject) {
+
+		  	//ok lets check to see if the header is ok
+		  	if(authData.expiresAt <= Date.now()) {
+		  		getToken(authData).then(function() {
+		  			//lets then set it
+				  	ironajax.headers.Authorization = 'bearer ' + authData.token.access_token;
+				  	resolve();
+		  		},function(){
+		  			reject();
+		  		});
+		  	} else {
+		  		//lets then set it
+			  	ironajax.headers.Authorization = 'bearer ' + authData.token.access_token;
+			  	resolve();
+		  	}
+		  	
+		  }
+	);
+}
+
+function handleFailure(ironajax, authData, host, success, fail,reason) {
+  if(ironajax.lastRequest.status != 401) {
+    host.$$('#toast').show({'text':reason,'fitInto':host});  
+  } else {
+    setToken(ironajax, authData).then(function() {
+      var d = ironajax.generateRequest();
+      d.completes.then(success,fail);
+    }.bind(host));
+  }
+}
+
+</script>

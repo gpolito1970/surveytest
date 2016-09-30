@@ -1,0 +1,144 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../underscore/underscore.js"></script>
+  <link rel="import" href="test-survey-srv-env-dev.html">
+  <link rel="import" href="test-document.html">
+
+</head>
+<body>
+
+<test-document document='' 
+	id='045E8B15-D35A-4EB0-A73E-63F71F3A35A0' 
+	customerid="bd760069-0de7-474b-97a8-ddeb5076dd89" 
+	personid="fde700e3-df83-406a-8ba4-1a97bab8cc90"
+	substitution='{
+      "chapter_name": "Alpha",
+      "chapter_location": "Indiana University "
+    }'
+  auth-Data='{ 
+      "username": "dj@testing.org",
+      "password": "0587692"
+    }'
+>
+
+
+  <div class="documentdescription">
+    {{substitution.document_description}}
+  </div>
+  <div class="documenttitle">
+    {{substitution.document_title}}
+  </div>
+  <div class="definitions">
+    <style>
+      div.definitions div.header {
+        background-color: #D3D3D3;
+      }
+
+      div.definitions {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        align-content: flex-start;
+      }
+
+      div.definitions paper-card {
+        margin:1em;
+        flex-grow:1;
+      }
+
+      div.definitions ul {
+        list-style: none;
+        margin:1em;
+        -webkit-margin-before:0;
+        -webkit-padding-start:0;
+      }
+
+      div.definitions ul li {
+        padding-left: 3em;
+        margin:2em 0;
+      }
+
+      div.definitions ul li iron-icon {
+        position:absolute;
+        left:1.5em;
+      }
+
+      div.definitions dl {
+        margin-left: 2em;
+        margin-bottom:2em;
+      }
+      div.definitions dl dt {
+        margin-top:2em;
+        font-weight:bold;
+      }
+
+      div.definitions dl dt::after {
+        content: ":";
+      }
+
+      div.definitions dl dd {
+        margin-top:.5em;
+        margin-left:0;
+      }
+
+    </style>
+   
+    <paper-card heading="Chapter Information">
+      <dl>
+        <dt> Chapter Greek Name </dt>
+        <dd>
+          {{substitution.chapter_name}}
+        </dd>
+        <dt> Institution(s) of Higher Education and Practice Setting(s) </dt>
+        <dd>
+           {{substitution.chapter_location}}
+        </dd>
+        <dt> Chapter # </dt>
+        <dd>
+           {{substitution.chapter_number}}
+        </dd>
+        <dt> Region </dt>
+        <dd>
+           {{substitution.chapter_region}}
+        </dd>
+      </dl>
+    </paper-card>
+
+     <paper-card heading="Legend">
+      <ul>
+        <li>
+          <iron-icon icon="icons:lightbulb-outline"></iron-icon>
+          These sections of the bylaws are meant to be adopted as is,
+          any changes will need to be approved by the International Governance Committee. 
+        </li>
+        <li>
+          <iron-icon icon="editor:mode-edit"></iron-icon>
+           Edits may be made to these sections.
+        </li>
+        <li>
+          <iron-icon icon="icons:lock-outline"></iron-icon>
+          Edits cannot be made to these sections.
+        </li>
+      </ul>
+    </paper-card>
+  </div>
+</test-document>
+
+
+</body>
+</html>
